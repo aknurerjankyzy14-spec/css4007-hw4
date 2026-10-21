@@ -1,0 +1,4 @@
+﻿run,strategy,questions,correct,unanswered,input_tokens,output_tokens,median_seconds,total_seconds
+1,S1,20,2,4,45000,577,2.701,56.354
+1,S2,20,16,0,225800,14997,17.639,357.95
+1,S3,20,20,0,55818,3208,6.441,166.961

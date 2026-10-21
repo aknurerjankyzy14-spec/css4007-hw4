@@ -29,7 +29,6 @@ and units → prepare arithmetic → calculate → compare → final answer.
 The loop manages model calls and tool results throughout this process.
 
 
-
 **What I am assuming:**
 
 - Use the 2025 census population unless the question asks for another year.
@@ -377,38 +376,38 @@ count as unanswered and incorrect.
 Reference answers are used only for evaluation, never in model prompts.
 
 | Run | Strategy | Correct /20 | Unanswered | Input tokens | Output tokens | Median seconds per question | Total seconds | Cost ($) |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| 1 | S1 direct | | | | | | | |
-| 1 | S2 think and vote (k = ) | | | | | | | |
-| 1 | S3 tools | | | | | | | |
-| 2 | S1 direct | | | | | | | |
-| 2 | S2 think and vote (k = ) | | | | | | | |
-| 2 | S3 tools | | | | | | | |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | S1 direct | 2/20 | 4 | 45000 | 577 | 2.701 | 56.354 | Pending |
+| 1 | S2 think and vote (k = 5) | 16/20 | 0 | 225800 | 14997 | 17.639 | 357.950 | Pending |
+| 1 | S3 tools | 20/20 | 0 | 55818 | 3208 | 6.441 | 166.961 | Pending |
+| 2 | S1 direct | 4/20 | 2 | 45000 | 632 | 2.914 | 67.794 | Pending |
+| 2 | S2 think and vote (k = 5) | 16/20 | 0 | 225800 | 14960 | 19.352 | 407.156 | Pending |
+| 2 | S3 tools | 20/20 | 0 | 57052 | 3070 | 5.789 | 135.341 | Pending |
+
 
 **Per question (run 1):**
-
 | Question | S1 | S2 | S3 |
 |---|:---:|:---:|:---:|
-| Q-01 | | | |
-| Q-02 | | | |
-| Q-03 | | | |
-| Q-04 | | | |
-| Q-05 | | | |
-| Q-06 | | | |
-| Q-07 | | | |
-| Q-08 | | | |
-| Q-09 | | | |
-| Q-10 | | | |
-| Q-11 | | | |
-| Q-12 | | | |
-| Q-13 | | | |
-| Q-14 | | | |
-| Q-15 | | | |
-| Q-16 | | | |
-| Q-17 | | | |
-| Q-18 | | | |
-| Q-19 | | | |
-| Q-20 | | | |
+| Q-01 | ✗ | ✓ | ✓ |
+| Q-02 | ✗ | ✓ | ✓ |
+| Q-03 | ✗ | ✓ | ✓ |
+| Q-04 | ✗ | ✓ | ✓ |
+| Q-05 | ✗ | ✗ | ✓ |
+| Q-06 | ✗ | ✓ | ✓ |
+| Q-07 | ✗ | ✓ | ✓ |
+| Q-08 | ✗ | ✗ | ✓ |
+| Q-09 | ✗ | ✓ | ✓ |
+| Q-10 | ✓ | ✓ | ✓ |
+| Q-11 | ✗ | ✓ | ✓ |
+| Q-12 | ✗ | ✗ | ✓ |
+| Q-13 | ✗ | ✓ | ✓ |
+| Q-14 | ✗ | ✓ | ✓ |
+| Q-15 | ✗ | ✓ | ✓ |
+| Q-16 | ✓ | ✓ | ✓ |
+| Q-17 | ✗ | ✓ | ✓ |
+| Q-18 | ✗ | ✓ | ✓ |
+| Q-19 | ✗ | ✓ | ✓ |
+| Q-20 | ✗ | ✗ | ✓ |
 
 ---
 
@@ -416,23 +415,207 @@ Reference answers are used only for evaluation, never in model prompts.
 
 ### C1 — Does the tool description matter?
 
+I tested five questions with the original lookup description and with
+the vague description "Looks things up." All other settings and tool
+parameters stayed the same.
+
+Calls in the table mean tool calls, not model requests.
+
 | Question | Calls (your description) | Calls (vague) | Answer (yours) | Answer (vague) |
 |---|---:|---:|---|---|
-| | | | | |
+| Q-01 | 5 | 2 | Ossbridge, 4.570154 — correct | no, 0 — incorrect |
+| Q-03 | 3 | 3 | Kelmarsh, 5.340159 — incorrect | unknown, 0 — incorrect |
+| Q-09 | 5 | 7 | Millbrook, 0.555656 — correct | Millbrook, 0.555656 — correct |
+| Q-17 | 4 | 3 | Harrowfield, 884.457162 — correct | unknown, 0 — incorrect |
+| Q-20 | 7 | 3 | Ashgrove, 2993.342836 — correct | unknown, 0 — incorrect |
 
+The detailed description achieved 4/5 correct answers.
+The vague description achieved 1/5.
+
+The inputs show an important difference. For Q-01, the detailed
+version used:
+{"query": "Ossbridge"}
+
+The vague version used:
+{"query": "Ossbridge 2025 population and area population density"}
+
+My lookup supports exact district names, document IDs and "water tariff",
+rather than general keyword searches. The longer query did not match
+its supported inputs. The vague version then stopped without the facts.
+
+For Q-09, the vague version first used long queries, then recovered
+by requesting "Brightwater" and "Millbrook". Both versions answered
+correctly, but the vague version needed seven tool calls instead of
+five and took 24.31 seconds instead of 9.54 seconds.
+
+For Q-17, the detailed version requested "Harrowfield", "Ossbridge"
+and "water tariff". The vague version used long search phrases and
+did not reach the calculation stage.
+
+The detailed description did not prevent every error. On Q-03,
+the model calculated Lindenmoor minus Kelmarsh:
+
+2151400000/(29051*365)-1739000000/(24117*365)
+
+The positive result was 5.34015866513721, meaning Lindenmoor used
+more water per resident per day. However, the final answer named
+Kelmarsh. The arithmetic was correct, but the model interpreted
+the comparison incorrectly.
+
+The detailed version used 24 tool calls in total; the vague version
+used 18. Fewer calls were not evidence of better performance because
+the vague version often stopped before calculating.
+
+These results suggest that clear descriptions help the model select
+valid inputs. However, there were only five questions and one trial
+per description per question at temperature=0.7. Random variation
+may explain some differences.
 ### C2 — Three mistakes explained
+#### S1: Q-09, run 1
 
+The log returned:
+
+"ANSWER: Brightwater | 10.2461"
+
+The correct answer is Millbrook, with a difference of approximately
+0.6 residents per km². The model returned both the wrong district
+and the wrong difference despite receiving all documents.
+
+The answer contains no intermediate calculations, so I cannot
+determine exactly which figures it used. It may have misread the
+facts or performed incorrect arithmetic. The log does not establish
+that the correction notice alone caused the error.
+
+#### S2: Q-05, run 1
+
+The first sample returned:
+
+"ANSWER: Coldharbour | 14206.9439799035"
+
+All five samples selected Coldharbour, but their rounded differences
+were 14207, 14245, 14234, 14255 and 14223.
+
+Each answer received one vote. My predefined tie-break selected
+the first sample, producing:
+
+"ANSWER: Coldharbour | 14207"
+
+The correct rounded difference is 14235 tenge per resident.
+The samples used the relevant budget and population figures but
+made arithmetic errors. Repeated sampling did not produce agreement.
+
+Voting can help when correct answers recur more often than incorrect
+ones. It cannot guarantee a correct result when calculations vary
+or the same mistake is repeated. A calculator evaluates the supplied
+formula reliably, although the model must still choose the right
+formula and interpret its result.
+
+#### S3: Q-11, run 1 — highest token use
+
+S3 answered every question correctly in both full runs, so I examined
+Q-11, which used the most tokens in S3.
+
+It retrieved Redfen, Ashgrove and Millbrook, then made four separate
+calculator calls:
+
+- 8837/24 → 368.2083333333333
+- 5562/15 → 370.8
+- 3147/10 → 314.7
+- 370.8-314.7 → 56.10000000000002
+
+The final answer was:
+
+"ANSWER: Redfen | 56.1"
+
+The model used six rounds: one retrieval round, four calculation
+rounds and one final-answer round. Some independent calculations
+could have been requested together.
+
+The run used 5,570 input tokens and 192 output tokens.
+Input tokens per round were 457, 944, 985, 1022, 1059 and 1103.
+Each request included previous messages and tool results, so the
+conversation became longer.
 ### C3 — Which strategy I would use, and what would change it
+I would choose S3 for this problem. It answered 20/20 questions
+correctly in both runs. S2 answered 16/20, while S1 answered
+2/20 and 4/20.
 
+S3 used approximately 59,000–60,000 total tokens per run,
+compared with approximately 241,000 for S2. Its median time per
+question was 6.441 and 5.789 seconds, compared with 17.639 and
+19.352 seconds for S2.
+
+I did not choose S1 because its speed and lower token use came
+with poor accuracy. I did not choose S2 because it used many
+more tokens and more time than S3 while still making errors.
+
+My choice could change in these situations:
+
+- For simple questions without arithmetic, a short corpus and a strict
+  time limit, I would test S1 first because it needs only one call.
+- For a much larger corpus, I would keep S3 but replace the current
+  lookup with indexed retrieval and metadata filters.
+- If tools were unavailable and accuracy mattered more than time,
+  I would consider S2 after validating it on representative questions.
+
+These choices would require new tests because my results apply
+to the current corpus and questions.
 ### C4 — How sure I can be
+S1 changed from 2/20 to 4/20 correct, a difference of 10 percentage
+points. Its unanswered count decreased from four to two.
 
+S2 scored 16/20 in both runs and failed the same four questions:
+Q-05, Q-08, Q-12 and Q-20. S3 scored 20/20 in both runs.
+The accuracy gap between S3 and S2 was 20 percentage points,
+larger than the observed between-run change for any strategy.
+
+However, two runs on the same 20 questions are limited evidence.
+They are repeated trials, not 40 independent questions.
+The C1 experiment also showed that S3 can make an interpretation
+error even with the detailed description.
+
+Before trusting the conclusion more broadly, I would test at least
+100–200 new, varied questions and repeat the comparison.
+This is a practical starting point, not a guaranteed sample size.
+The required number depends on the accuracy difference I want
+to detect and the uncertainty I can accept.
 ### Final questions
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
-8.
+1. Only model inference has run. The model has produced tool names
+   and arguments, but the requested functions have not executed.
+   My Python loop validates the requests and runs the tools.
+
+2. The API represents arguments as JSON text inside a string.
+   My loop uses json.loads and checks the resulting dictionary.
+   Passing the raw string directly would give the function the wrong
+   input type or fail to unpack the required keyword arguments.
+
+3. I measured tool-related overhead using identical messages with
+   and without the two tool definitions. Input usage increased from
+   10 to 287 tokens, a difference of 277 tokens.
+   The tools condition used tool_choice="none", so this measures
+   overhead for that configuration; it is not a separate charge
+   to add to the recorded S3 usage.
+4. 
+4. To be completed using the API prices and saved usage.
+
+5. Q-11 needed the most S3 rounds: six in both full runs.
+   The model retrieved three profiles, calculated three pupil-to-school
+   ratios separately, calculated their difference and gave the answer.
+
+6. For 100,000 documents, I would use an indexed database with
+   exact-name matching and keyword or semantic retrieval.
+   Metadata filters would select current documents, while correction
+   links would preserve precedence. I would still return short excerpts
+   with source IDs.
+
+7. The calculator allows only specific AST nodes and arithmetic
+   operators, without eval or exec. It limits input length, AST size
+   and numeric magnitude. The model can still submit a wrong formula,
+   trigger errors or interpret a correct result incorrectly.
+
+8. Tools helped most with multi-step arithmetic, unit conversion
+   and questions requiring corrected facts, such as Q-03 and Q-09.
+   They did not improve full-run accuracy on Q-10 or Q-16 because
+   S1 already answered these correctly in both runs, although tools
+   added time and tokens.

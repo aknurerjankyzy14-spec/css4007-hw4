@@ -77,8 +77,8 @@ def execute_tool(name, raw_arguments):
 
     return function(**arguments)
 
-
-def run_s3(question_id, question):
+def run_s3(question_id, question, tool_specs=None):
+    active_tools = TOOL_SPECS if tool_specs is None else tool_specs
     load_dotenv(ROOT / ".env")
 
     # Disable automatic retries so failed attempts are not hidden.
@@ -98,6 +98,7 @@ def run_s3(question_id, question):
     log = {
         "question_id": question_id,
         "strategy": "S3",
+        "tool_specs": active_tools,
         "model": MODEL,
         "max_rounds": MAX_ROUNDS,
         "temperature": TEMPERATURE,
@@ -127,7 +128,7 @@ def run_s3(question_id, question):
             response = client.chat.completions.create(
                 model=MODEL,
                 messages=messages,
-                tools=TOOL_SPECS,
+                tools=active_tools,
                 reasoning_effort="none",
                 temperature=TEMPERATURE,
             )
