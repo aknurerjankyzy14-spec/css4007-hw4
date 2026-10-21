@@ -376,14 +376,22 @@ count as unanswered and incorrect.
 Reference answers are used only for evaluation, never in model prompts.
 
 | Run | Strategy | Correct /20 | Unanswered | Input tokens | Output tokens | Median seconds per question | Total seconds | Cost ($) |
-|---|---|---:|---:|---:|---:|---:|---:|---|
-| 1 | S1 direct | 2/20 | 4 | 45000 | 577 | 2.701 | 56.354 | Pending |
-| 1 | S2 think and vote (k = 5) | 16/20 | 0 | 225800 | 14997 | 17.639 | 357.950 | Pending |
-| 1 | S3 tools | 20/20 | 0 | 55818 | 3208 | 6.441 | 166.961 | Pending |
-| 2 | S1 direct | 4/20 | 2 | 45000 | 632 | 2.914 | 67.794 | Pending |
-| 2 | S2 think and vote (k = 5) | 16/20 | 0 | 225800 | 14960 | 19.352 | 407.156 | Pending |
-| 2 | S3 tools | 20/20 | 0 | 57052 | 3070 | 5.789 | 135.341 | Pending |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | S1 direct | 2/20 | 4 | 45000 | 577 | 2.701 | 56.354 | 0.048462 |
+| 1 | S2 think and vote (k = 5) | 16/20 | 0 | 225800 | 14997 | 17.639 | 357.950 | 0.315782 |
+| 1 | S3 tools | 20/20 | 0 | 55818 | 3208 | 6.441 | 166.961 | 0.075066 |
+| 2 | S1 direct | 4/20 | 2 | 45000 | 632 | 2.914 | 67.794 | 0.048792 |
+| 2 | S2 think and vote (k = 5) | 16/20 | 0 | 225800 | 14960 | 19.352 | 407.156 | 0.315560 |
+| 2 | S3 tools | 20/20 | 0 | 57052 | 3070 | 5.789 | 135.341 | 0.075472 |
 
+Estimated cost uses $1 per million input tokens and $6 per million
+output tokens. All input tokens are charged at the standard rate
+because a separate cached-input price was not available.
+
+Cost = (input_tokens × 1 + output_tokens × 6) / 1,000,000.
+
+The estimated total for the two full runs is $0.879134.
+This excludes pilots and additional experiments.
 
 **Per question (run 1):**
 | Question | S1 | S2 | S3 |
@@ -596,8 +604,12 @@ to detect and the uncertainty I can accept.
    The tools condition used tool_choice="none", so this measures
    overhead for that configuration; it is not a separate charge
    to add to the recorded S3 usage.
-4. 
-4. To be completed using the API prices and saved usage.
+
+4. Without a caching discount, S2 cost approximately 6.52 times
+   as much as S1 in run 1: $0.315782 versus $0.048462,
+   an increase of $0.267320. In run 2, it cost approximately
+   6.47 times as much. S2 sends the documents five times
+   per question and generates longer step-by-step answers.
 
 5. Q-11 needed the most S3 rounds: six in both full runs.
    The model retrieved three profiles, calculated three pupil-to-school
