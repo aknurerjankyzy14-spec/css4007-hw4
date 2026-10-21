@@ -76,6 +76,7 @@ The loop manages model calls and tool results throughout this process.
 | Archived document requested | `{"error": "archived_document", "replacement": "..."}` |
 | Empty, non-string or excessive input | `{"error": "invalid_query"}` |
 | Missing or invalid corpus | `{"error": "corpus_unavailable"}` |
+
 Return at most three matches and limit each text to 900 characters.
 A district lookup returns its current profile and relevant corrections.
 A lookup by current profile ID also includes relevant corrections.
