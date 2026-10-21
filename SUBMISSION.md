@@ -1,6 +1,6 @@
 # HW4 — submission
 
-**AI assistance:** AI assistance: I used ChatGPT to help plan the tools, understand the task, and prepare and explain the Python code. Experimental results and conclusions will come from my own runs.
+**AI assistance:** I used ChatGPT to help plan the tools, understand the task, and prepare and explain the Python code. Experimental results and conclusions will come from my own runs.
 
 ---
 
@@ -237,27 +237,144 @@ and calculations are needed, while the loop controls execution.
 
 ### What I changed from Part A while coding
 
-<!-- what changed in your plan, and why. "None" is an answer too. -->
+I explicitly set reasoning_effort="none" because the API rejected
+function tools with the model's default reasoning setting in Chat
+Completions. I will use the same setting for all three strategies.
 
 ### B2 — Tests
 
 ```text
-<!-- pytest output -->
+<!-- pytest output -->notice] To update, run: python.exe -m pip install --upgrade pip
+(.venv) PS C:\Users\Admin\PycharmProjects\css4007-hw4> New-Item -ItemType Directory -Force outputs
+
+
+    Каталог: C:\Users\Admin\PycharmProjects\css4007-hw4
+
+
+Mode                 LastWriteTime         Length Name                            
+----                 -------------         ------ ----
+d-----        10/21/2026   8:28 PM                outputs
+
+
+(.venv) PS C:\Users\Admin\PycharmProjects\css4007-hw4> python -m pytest tests -v 2>&1 | Tee-Object -FilePath outputs/pytest.txt
+platform win32 -- Python 3.13.2, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\Admin\PycharmProjects\css4007-hw4\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Admin\PycharmProjects\css4007-hw4
+plugins: anyio-4.15.1
+collecting ... collected 34 items
+
+tests/test_tools.py::test_lookup_current_population PASSED               [  2%]    
+tests/test_tools.py::test_lookup_similar_names_are_separate PASSED       [  5%]    
+tests/test_tools.py::test_lookup_ambiguous_name PASSED                   [  8%]    
+tests/test_tools.py::test_lookup_misspelled_name PASSED                  [ 11%]    
+tests/test_tools.py::test_lookup_archived_profile[NR-13-NR-03] PASSED    [ 14%]    
+tests/test_tools.py::test_lookup_archived_profile[NR-14-NR-04] PASSED    [ 17%]    
+tests/test_tools.py::test_lookup_includes_correction[Brightwater] PASSED [ 20%]    
+tests/test_tools.py::test_lookup_includes_correction[NR-05] PASSED       [ 23%]    
+tests/test_tools.py::test_lookup_water_tariff PASSED                     [ 26%]    
+tests/test_tools.py::test_lookup_invalid_input[] PASSED                  [ 29%]    
+tests/test_tools.py::test_lookup_invalid_input[   ] PASSED               [ 32%]
+tests/test_tools.py::test_lookup_invalid_input[None] PASSED              [ 35%]    
+tests/test_tools.py::test_lookup_invalid_input[123] PASSED               [ 38%]    
+tests/test_tools.py::test_lookup_invalid_input[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx] PASSED [ 41%]
+tests/test_tools.py::test_lookup_missing_corpus PASSED                   [ 44%]    
+tests/test_tools.py::test_lookup_invalid_corpus PASSED                   [ 47%]
+tests/test_tools.py::test_calculate_multiplication PASSED                [ 50%]    
+tests/test_tools.py::test_calculate_q09 PASSED                           [ 52%]    
+tests/test_tools.py::test_calculate_parentheses_and_unary_minus PASSED   [ 55%]    
+tests/test_tools.py::test_calculate_division_by_zero PASSED              [ 58%]    
+tests/test_tools.py::test_calculate_rejects_dangerous_input[__import__('os').system('echo hi')] PASSED [ 61%]
+tests/test_tools.py::test_calculate_rejects_dangerous_input[(1).__class__] PASSED [ 64%]
+tests/test_tools.py::test_calculate_rejects_dangerous_input[9**9**9] PASSED [ 67%] 
+tests/test_tools.py::test_calculate_does_not_execute_commands PASSED     [ 70%]    
+tests/test_tools.py::test_calculate_invalid_syntax PASSED                [ 73%]    
+tests/test_tools.py::test_calculate_invalid_input[] PASSED               [ 76%]    
+tests/test_tools.py::test_calculate_invalid_input[   ] PASSED            [ 79%]    
+tests/test_tools.py::test_calculate_invalid_input[None] PASSED           [ 82%]    
+tests/test_tools.py::test_calculate_invalid_input[123] PASSED            [ 85%]    
+tests/test_tools.py::test_calculate_invalid_input[111111111111111111111111111111111
+11111111111111111111111111111111111111111111111111111111111111111111111111111111111
+1111111111111111111111111111111111111111111111111111111111111111111111111111111111111] PASSED [ 88%]
+tests/test_tools.py::test_calculate_numeric_limit[1000000000000001] PASSED [ 91%]  
+tests/test_tools.py::test_calculate_numeric_limit[1000000000 * 1000000000] PASSED [ 94%]
+tests/test_tools.py::test_calculate_numeric_limit[1e309] PASSED          [ 97%]    
+tests/test_tools.py::test_calculate_rejects_boolean PASSED               [100%]
+
+(.venv) PS C:\Users\Admin\PycharmProjects\css4007-hw4> 
+
 ```
 
 ### B3 — The loop
 
-- Round limit, and why:
-- Where the logs are:
-- Real Q-09 conversation compared with my A3 version, what is different:
+- Round limit: 12 model calls per question. This allows several retrieval
+  and calculation steps while preventing an endless loop.
+- Logs are saved as JSON files in outputs/.
+- The Q-09 log is outputs/S3_Q-09_20261021T153310_231554Z.json.
+
+The real conversation used 4 model calls and 5 tool calls:
+two lookup calls and three calculate calls.
+
+In round 1, the model requested Brightwater and Millbrook.
+Lookup returned the Brightwater correction notice together with its
+profile. The model correctly used the corrected area of 921.4 km².
+
+In round 2, it calculated each density separately:
+44675 / 921.4 = 48.48599956587801;
+37203 / 758.6 = 49.041655681518584.
+
+In round 3, it calculated the difference:
+37203 / 758.6 - 44675 / 921.4 = 0.5556561156405735.
+
+In round 4, it returned Millbrook as the answer.
+The difference rounds to 0.6 residents per km².
+
+My manual example used one calculation call for the difference.
+The real model first calculated both densities separately, adding
+two calculator calls and one extra model round.
+Both conversations reached the same result.
+
+The real answer was unrounded, while my manual answer was rounded.
+The run used 3,185 input tokens and 178 output tokens.
+Total elapsed time was approximately 11.92 seconds.
+
+Input tokens increased across rounds: 442, 833, 928 and 982.
+Each new request included the previous messages and tool results.
 
 ### B4 — Three strategies
 
 **What I kept the same:**
 
-<!-- model, temperature, k, prompts, answer format, anything else -->
+All strategies use gpt-5.6-luna through Chat Completions,
+temperature=0.7 and reasoning_effort="none".
+
+They use the same questions, factual assumptions, answer format and
+evaluation rule. Reference answers are never sent to the model.
+
+S1 and S2 receive all 17 documents. S1 makes one call.
+S2 requests a step-by-step solution in five independent calls.
+Voting uses the exact name and rounded number. Ties are resolved
+by choosing the earliest sample among tied answers.
+
+S3 receives the tools instead of the documents and has a limit
+of 12 model calls per question.
+
+The earlier Q-09 demonstration used the default temperature.
+It is a pilot and is excluded from the full-run comparison.
 
 **My rule for a correct answer** (written before the first full run):
+Read the final ANSWER line. The name must match the reference answer
+exactly after removing surrounding whitespace.
+
+Round the predicted number and reference value to the question's
+specified number of decimals. Accept an absolute difference of at
+most 10^(-decimals), allowing one unit in the last decimal place.
+
+Missing or invalid ANSWER lines, API failures and round-limit failures
+count as unanswered and incorrect.
+
+Reference answers are used only for evaluation, never in model prompts.
 
 | Run | Strategy | Correct /20 | Unanswered | Input tokens | Output tokens | Median seconds per question | Total seconds | Cost ($) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
